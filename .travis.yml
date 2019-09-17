@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ahmorsi/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true ahmorsi/react-test npm run test
+
+after_success:
+  - docker build -t ahmorsi/multi-client ./client
+  - docker build -t ahmorsi/multi-nginx ./nginx
+  - docker build -t ahmorsi/multi-server ./server
+  - docker build -t ahmorsi/multi-worker ./worker
+  # Login in to Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to hub
+  - docker push ahmorsi/multi-client
+  - docker push ahmorsi/multi-nginx
+  - docker push ahmorsi/multi-server
+  - docker push ahmorsi/multi-worker
